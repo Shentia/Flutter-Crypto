@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'model/Currency.dart';
 
 void main() {
   runApp(const MyApp());
@@ -131,12 +134,12 @@ class Home extends StatelessWidget {
               ),
             ),
           ),
-          Container(
+          SizedBox(
             width: double.infinity,
             height: 350,
             child: ListView.separated(
               physics: const BouncingScrollPhysics(),
-              itemCount: 15,
+              itemCount: 5,
               itemBuilder: (BuildContext ctx, int position) {
                 return const Padding(
                   padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
@@ -155,23 +158,95 @@ class Home extends StatelessWidget {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 232, 232, 232),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(50),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    height: 50,
+                    child: TextButton.icon(
+                      onPressed: () => _showSnackBar(context, 'success'),
+                      icon: const Icon(
+                        CupertinoIcons.refresh,
+                        color: Colors.white,
+                      ),
+                      label: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                        child: Text(
+                          'Refresh',
+                          style: Theme.of(context).textTheme.headline2,
+                        ),
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(
+                          const Color.fromARGB(255, 254, 0, 0),
+                        ),
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                    child: Text("Last Update ${_getTime()}"),
+                  ),
+                ],
+              ),
+            ),
+          )
         ],
       ),
     );
   }
 }
 
+String _getTime() {
+  return "20:45";
+}
+
+void _showSnackBar(BuildContext context, String msg) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, style: Theme.of(context).textTheme.headline2),
+      backgroundColor: Colors.green));
+}
+
 class ItemPriceRow extends StatelessWidget {
-  const ItemPriceRow({
+  ItemPriceRow({
     Key? key,
   }) : super(key: key);
 
+  List<Currency> currency = [];
+
   @override
   Widget build(BuildContext context) {
+    currency.add(Currency(
+        id: "1", title: "USD", price: '1000', changes: "+5", status: 'p'));
+    currency.add(Currency(
+        id: "1", title: "CAD", price: '1000', changes: "+2", status: 'n'));
+    currency.add(Currency(
+        id: "1", title: "USD", price: '1000', changes: "+1", status: 'p'));
+    currency.add(Currency(
+        id: "1", title: "USD", price: '1000', changes: "+4", status: 'p'));
+    currency.add(Currency(
+        id: "1", title: "USD", price: '1000', changes: "+2", status: 'p'));
     return Container(
       width: double.infinity,
       height: 50,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         boxShadow: <BoxShadow>[BoxShadow(blurRadius: 1.0, color: Colors.grey)],
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(50)),
@@ -179,9 +254,10 @@ class ItemPriceRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text("CAD", style: Theme.of(context).textTheme.bodyText1),
-          Text("23.00", style: Theme.of(context).textTheme.bodyText1),
-          Text("+3", style: Theme.of(context).textTheme.bodyText1),
+          Text(currency[0].title, style: Theme.of(context).textTheme.bodyText1),
+          Text(currency[0].price, style: Theme.of(context).textTheme.bodyText1),
+          Text(currency[0].changes,
+              style: Theme.of(context).textTheme.bodyText1),
         ],
       ),
     );
