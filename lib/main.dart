@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
 import 'model/Currency.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
+import 'dart:developer' as dev;
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -49,21 +51,83 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.normal,
             color: Colors.grey,
           ),
+          headline4: TextStyle(
+            fontFamily: "Robo",
+            fontSize: 14,
+            fontWeight: FontWeight.normal,
+            color: Colors.red,
+          ),
+          headline5: TextStyle(
+            fontFamily: "Robo",
+            fontSize: 14,
+            fontWeight: FontWeight.normal,
+            color: Colors.green,
+          ),
         ),
       ),
       debugShowCheckedModeBanner: false,
-      home: const Home(),
+      home: Home(),
     );
   }
 }
 
-class Home extends StatelessWidget {
-  const Home({
-    Key? key,
-  }) : super(key: key);
+class Home extends StatefulWidget {
+  Home({Key? key}) : super(key: key);
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  List<Currency> currency = [];
+
+  getResponse(BuildContext context) {
+    String url =
+        "http://sasansafari.com/flutter/api.php?access_key=flutter123456";
+
+    http.get(Uri.parse(url)).then(
+      (value) {
+        if (currency.isEmpty) {
+          if (value.statusCode == 200) {
+            List jsonList = convert.jsonDecode(value.body);
+
+            // dev.log(value.body, name: "mamali");
+
+            if (jsonList.isNotEmpty) {
+              for (int i = 0; i < jsonList.length; i++) {
+                setState(() {
+                  currency.add(
+                    Currency(
+                      id: jsonList[i]["id"],
+                      title: jsonList[i]["title"],
+                      price: jsonList[i]["price"],
+                      changes: jsonList[i]["changes"],
+                      status: jsonList[i]["status"],
+                    ),
+                  );
+                });
+              }
+            }
+          }
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // currency.add(Currency(
+    //     id: "1", title: "USD", price: '1000', changes: "+5", status: 'p'));
+    // currency.add(Currency(
+    //     id: "1", title: "CAD", price: '1000', changes: "+2", status: 'n'));
+    // currency.add(Currency(
+    //     id: "1", title: "USD", price: '1000', changes: "+1", status: 'p'));
+    // currency.add(Currency(
+    //     id: "1", title: "USD", price: '1000', changes: "+4", status: 'p'));
+    // currency.add(Currency(
+    //     id: "1", title: "USD", price: '1000', changes: "+2", status: 'p'));
+    getResponse(context);
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 243, 243, 243),
       appBar: AppBar(
@@ -95,7 +159,7 @@ class Home extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 20.0, top: 16.0),
+            padding: EdgeInsets.only(left: 20.0, top: 16.0),
             child: Row(
               children: [
                 Image.asset("assets/images/faq.png"),
@@ -139,16 +203,16 @@ class Home extends StatelessWidget {
             height: 350,
             child: ListView.separated(
               physics: const BouncingScrollPhysics(),
-              itemCount: 5,
+              itemCount: currency.length,
               itemBuilder: (BuildContext ctx, int position) {
-                return const Padding(
-                  padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
-                  child: ItemPriceRow(),
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
+                  child: ItemPriceRow(position, currency),
                 );
               },
               separatorBuilder: (BuildContext context, int index) {
                 if (index % 9 == 0) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
                     child: adv(),
                   );
@@ -225,24 +289,12 @@ void _showSnackBar(BuildContext context, String msg) {
 }
 
 class ItemPriceRow extends StatelessWidget {
-  ItemPriceRow({
-    Key? key,
-  }) : super(key: key);
+  int position;
+  List<Currency> currency;
 
-  List<Currency> currency = [];
-
+  ItemPriceRow(this.position, this.currency);
   @override
   Widget build(BuildContext context) {
-    currency.add(Currency(
-        id: "1", title: "USD", price: '1000', changes: "+5", status: 'p'));
-    currency.add(Currency(
-        id: "1", title: "CAD", price: '1000', changes: "+2", status: 'n'));
-    currency.add(Currency(
-        id: "1", title: "USD", price: '1000', changes: "+1", status: 'p'));
-    currency.add(Currency(
-        id: "1", title: "USD", price: '1000', changes: "+4", status: 'p'));
-    currency.add(Currency(
-        id: "1", title: "USD", price: '1000', changes: "+2", status: 'p'));
     return Container(
       width: double.infinity,
       height: 50,
@@ -254,10 +306,14 @@ class ItemPriceRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text(currency[0].title, style: Theme.of(context).textTheme.bodyText1),
-          Text(currency[0].price, style: Theme.of(context).textTheme.bodyText1),
-          Text(currency[0].changes,
+          Text(currency[position].title!,
               style: Theme.of(context).textTheme.bodyText1),
+          Text(currency[position].price!,
+              style: Theme.of(context).textTheme.bodyText1),
+          Text(currency[position].changes!,
+              style: currency[position].status == "n"
+                  ? Theme.of(context).textTheme.headline4
+                  : Theme.of(context).textTheme.headline5),
         ],
       ),
     );
@@ -265,9 +321,7 @@ class ItemPriceRow extends StatelessWidget {
 }
 
 class adv extends StatelessWidget {
-  const adv({
-    Key? key,
-  }) : super(key: key);
+  adv();
 
   @override
   Widget build(BuildContext context) {
