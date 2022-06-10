@@ -81,37 +81,44 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<Currency> currency = [];
 
-  getResponse(BuildContext context) {
+  Future getResponse(BuildContext context) async {
     String url =
         "http://sasansafari.com/flutter/api.php?access_key=flutter123456";
+    dev.log("getResponse", name: "wlifeCycle");
+    var value = await http.get(Uri.parse(url));
 
-    http.get(Uri.parse(url)).then(
-      (value) {
-        if (currency.isEmpty) {
-          if (value.statusCode == 200) {
-            List jsonList = convert.jsonDecode(value.body);
+    if (currency.isEmpty) {
+      if (value.statusCode == 200) {
+        _showSnackBar(context, "Data are Updated.");
+        List jsonList = convert.jsonDecode(value.body);
 
-            // dev.log(value.body, name: "mamali");
+        // dev.log(value.body, name: "mamali");
 
-            if (jsonList.isNotEmpty) {
-              for (int i = 0; i < jsonList.length; i++) {
-                setState(() {
-                  currency.add(
-                    Currency(
-                      id: jsonList[i]["id"],
-                      title: jsonList[i]["title"],
-                      price: jsonList[i]["price"],
-                      changes: jsonList[i]["changes"],
-                      status: jsonList[i]["status"],
-                    ),
-                  );
-                });
-              }
-            }
+        if (jsonList.isNotEmpty) {
+          for (int i = 0; i < jsonList.length; i++) {
+            setState(() {
+              currency.add(
+                Currency(
+                  id: jsonList[i]["id"],
+                  title: jsonList[i]["title"],
+                  price: jsonList[i]["price"],
+                  changes: jsonList[i]["changes"],
+                  status: jsonList[i]["status"],
+                ),
+              );
+            });
           }
         }
-      },
-    );
+      }
+    }
+    return value;
+  }
+
+  @override
+  void initState() {
+    dev.log("initState", name: "wlifeCycle");
+    getResponse(context);
+    _getTime();
   }
 
   @override
@@ -126,7 +133,8 @@ class _HomeState extends State<Home> {
     //     id: "1", title: "USD", price: '1000', changes: "+4", status: 'p'));
     // currency.add(Currency(
     //     id: "1", title: "USD", price: '1000', changes: "+2", status: 'p'));
-    getResponse(context);
+
+    dev.log("build ", name: "wlifeCycle");
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 243, 243, 243),
@@ -201,26 +209,7 @@ class _HomeState extends State<Home> {
           SizedBox(
             width: double.infinity,
             height: 350,
-            child: ListView.separated(
-              physics: const BouncingScrollPhysics(),
-              itemCount: currency.length,
-              itemBuilder: (BuildContext ctx, int position) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
-                  child: ItemPriceRow(position, currency),
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                if (index % 9 == 0) {
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
-                    child: adv(),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              },
-            ),
+            child: listFutureBuilder(context),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
@@ -239,7 +228,13 @@ class _HomeState extends State<Home> {
                   SizedBox(
                     height: 50,
                     child: TextButton.icon(
-                      onPressed: () => _showSnackBar(context, 'success'),
+                      onPressed: () {
+                        currency.clear();
+                        listFutureBuilder(context);
+                        // setState(() {
+                        //   getResponse(context);
+                        // });
+                      },
                       icon: const Icon(
                         CupertinoIcons.refresh,
                         color: Colors.white,
@@ -276,10 +271,42 @@ class _HomeState extends State<Home> {
       ),
     );
   }
+
+  FutureBuilder<dynamic> listFutureBuilder(BuildContext context) {
+    return FutureBuilder(
+      builder: (context, snapshot) {
+        return snapshot.hasData
+            ? ListView.separated(
+                physics: const BouncingScrollPhysics(),
+                itemCount: currency.length,
+                itemBuilder: (BuildContext ctx, int position) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
+                    child: ItemPriceRow(position, currency),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  if (index % 9 == 0) {
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 0.0),
+                      child: adv(),
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                },
+              )
+            : const Center(
+                child: CircularProgressIndicator(),
+              );
+      },
+      future: getResponse(context),
+    );
+  }
 }
 
 String _getTime() {
-  return "20:45";
+  return "20:55";
 }
 
 void _showSnackBar(BuildContext context, String msg) {
