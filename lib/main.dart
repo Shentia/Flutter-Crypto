@@ -5,6 +5,7 @@ import 'model/Currency.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'dart:developer' as dev;
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(MyApp());
@@ -306,7 +307,8 @@ class _HomeState extends State<Home> {
 }
 
 String _getTime() {
-  return "20:55";
+  DateTime now = DateTime.now();
+  return DateFormat('HH:mm').format(now);
 }
 
 void _showSnackBar(BuildContext context, String msg) {
